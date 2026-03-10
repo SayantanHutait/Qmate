@@ -140,3 +140,18 @@ async def get_stats():
         resolved_chat_chunks=stats["resolved_chat_chunks"],
         collections=[vector_db.collection.name],
     )
+
+@router.get("/sources")
+async def get_knowledge_sources():
+    """Return all distinct document sources in the knowledge base."""
+    sources = vector_db.get_all_sources()
+    return sources
+
+@router.delete("/sources/{source}")
+async def delete_knowledge_source(source: str):
+    """Delete a specific document or FAQ from the knowledge base."""
+    deleted_count = vector_db.delete_by_source(source)
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Source not found or no chunks deleted.")
+        
+    return {"message": f"Successfully deleted source '{source}'. Removed {deleted_count} chunks."}

@@ -74,9 +74,11 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(knowledge.router)
-from routers import queue, ws_chat
+from routers import queue, ws_chat, users, admin_chats
 app.include_router(queue.router)
 app.include_router(ws_chat.router)
+app.include_router(users.router)
+app.include_router(admin_chats.router)
 
 # ── Root ──────────────────────────────────────────────────────────────────────
 @app.get("/", tags=["Root"])

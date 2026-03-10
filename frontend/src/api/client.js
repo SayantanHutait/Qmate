@@ -91,6 +91,16 @@ export const searchKnowledge = async ({ query, n_results = 5, department }) => {
   return data;
 };
 
+export const getKnowledgeSources = async () => {
+  const { data } = await api.get("/api/knowledge/sources");
+  return data;
+};
+
+export const deleteKnowledgeSource = async (source) => {
+  const { data } = await api.delete(`/api/knowledge/sources/${encodeURIComponent(source)}`);
+  return data;
+};
+
 export const getChatHealth = async () => {
   const { data } = await api.get("/api/chat/health");
   return data;
@@ -115,6 +125,40 @@ export const acceptChat = async ({ session_id }) => {
 
 export const resolveChat = async ({ session_id }) => {
   const { data } = await api.post(`/api/queue/resolve/${session_id}`);
+  return data;
+};
+
+// ── Users (Admin) ────────────────────────────────────────────────────────────
+
+export const getUsers = async () => {
+  const { data } = await api.get("/api/users");
+  return data;
+};
+
+export const createUser = async (userData) => {
+  const { data } = await api.post("/api/users", userData);
+  return data;
+};
+
+export const deleteUser = async (userId) => {
+  const { data } = await api.delete(`/api/users/${userId}`);
+  return data;
+};
+
+// ── Admin Chat Review ────────────────────────────────────────────────────────
+
+export const getResolvedChats = async () => {
+  const { data } = await api.get("/api/admin/chats/resolved");
+  return data;
+};
+
+export const getChatDetails = async (sessionId) => {
+  const { data } = await api.get(`/api/admin/chats/${sessionId}`);
+  return data;
+};
+
+export const deleteChatSession = async (sessionId) => {
+  const { data } = await api.delete(`/api/admin/chats/${sessionId}`);
   return data;
 };
 

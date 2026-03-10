@@ -6,30 +6,11 @@ from pydantic import BaseModel
 
 from models.database import get_db
 from models.user import User, UserRole
+from models.schemas import UserCreate, UserResponse, Token
 from utils.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from utils.dependencies import get_current_active_user, get_current_admin_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class UserCreate(BaseModel):
-    email: str
-    password: str
-    full_name: str = None
-    role: UserRole = UserRole.STUDENT
-
-class UserResponse(BaseModel):
-    id: int
-    email: str
-    full_name: str = None
-    role: UserRole
-    is_active: bool
-
-    class Config:
-        from_attributes = True
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -39,6 +20,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     
     hashed_password = get_password_hash(user.password)
     new_user = User(
+        university_id=user.university_id,
         email=user.email,
         hashed_password=hashed_password,
         full_name=user.full_name,

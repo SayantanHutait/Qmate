@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { uploadPDF, addFAQ, getKnowledgeStats, addResolvedChat } from "../api/client";
+import { uploadPDF, addFAQ, getKnowledgeStats, addResolvedChat, getKnowledgeSources, deleteKnowledgeSource } from "../api/client";
 
-const TABS = ["📄 Upload PDF", "✅ Add FAQ", "💬 Add Resolved Chat", "📊 Stats"];
+const TABS = ["📄 Upload PDF", "✅ Add FAQ", "💬 Add Resolved Chat", "📊 Stats", "🗑️ Manage Content"];
 const DEPARTMENTS = ["General", "Admissions", "Finance", "Academics", "IT Support", "Library"];
 
 export default function KnowledgePanel({ onClose }) {
@@ -65,6 +65,11 @@ export default function KnowledgePanel({ onClose }) {
 
         {/* Tab 3: Stats */}
         {tab === 3 && <StatsTab stats={stats} onRefresh={fetchStats} />}
+
+        {/* Tab 4: Manage Content */}
+        {tab === 4 && (
+          <ManageContentTab showStatus={showStatus} onSuccess={fetchStats} />
+        )}
       </div>
     </div>
   );
@@ -200,6 +205,94 @@ function StatsTab({ stats, onRefresh }) {
   );
 }
 
+function ManageContentTab({ showStatus, onSuccess }) {
+  const [sources, setSources] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSources();
+  }, []);
+
+  const fetchSources = async () => {
+    setLoading(true);
+    try {
+      const data = await getKnowledgeSources();
+      setSources(data);
+    } catch (e) {
+      showStatus("error", "Failed to load knowledge sources.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (sourceUrl) => {
+    if (!window.confirm(`Are you sure you want to permanently delete knowledge derived from:\n\n${sourceUrl}\n\nThis will remove all associated AI context chunks.`)) return;
+
+    try {
+      const res = await deleteKnowledgeSource(sourceUrl);
+      showStatus("success", res.message);
+      fetchSources();
+      onSuccess(); // Refresh stats
+    } catch (e) {
+      showStatus("error", e?.response?.data?.detail || "Deletion failed.");
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown";
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (loading) return <div style={styles.desc}>Loading content list...</div>;
+
+  return (
+    <div>
+      <p style={styles.desc}>View and delete currently embedded knowledge sources. Deleting a source removes all of its chunks from the AI's actively searchable context.</p>
+      
+      <div style={{...styles.tableContainer, marginTop: 16}}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Source / Title</th>
+              <th style={styles.th}>Type</th>
+              <th style={styles.th}>Dept.</th>
+              <th style={styles.th}>Chunks</th>
+              <th style={styles.th}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sources.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{...styles.td, textAlign: 'center'}}>No sources found in ChromaDB.</td>
+              </tr>
+            ) : (
+              sources.map((s, idx) => (
+                <tr key={idx}>
+                  <td style={{...styles.td, maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}} title={s.source}>
+                    <strong>{s.source}</strong><br/>
+                    <span style={{fontSize: 10, color: '#64748b'}}>{formatDate(s.added_at)}</span>
+                  </td>
+                  <td style={styles.td}>
+                    {s.doc_type === 'pdf' ? '📄 PDF' : s.doc_type === 'faq' ? '✅ FAQ' : '💬 Chat'}
+                  </td>
+                  <td style={styles.td}>{s.department}</td>
+                  <td style={styles.td}>{s.chunk_count}</td>
+                  <td style={styles.td}>
+                    <button onClick={() => handleDelete(s.source)} style={styles.deleteBtn}>
+                      🗑️ Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 const styles = {
   wrapper: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" },
   header: { padding: "20px 24px", borderBottom: "1px solid #334155", background: "#1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" },
@@ -219,4 +312,9 @@ const styles = {
   fileInput: { color: "#94a3b8", fontSize: 13 },
   fileInfo: { fontSize: 12, color: "#64748b", background: "#1e293b", padding: "8px 12px", borderRadius: 8, border: "1px solid #334155" },
   btn: { padding: "12px 20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: 600, marginTop: 8 },
+  tableContainer: { overflowY: 'auto', flex: 1, maxHeight: 400, border: '1px solid #334155', borderRadius: 8, background: '#0f172a' },
+  table: { width: '100%', borderCollapse: 'collapse' },
+  th: { textAlign: 'left', padding: '12px', borderBottom: '2px solid #334155', color: '#94a3b8', position: 'sticky', top: 0, backgroundColor: '#1e293b', fontSize: 12, textTransform: 'uppercase' },
+  td: { padding: '12px', borderBottom: '1px solid #334155', fontSize: 13, color: '#e2e8f0' },
+  deleteBtn: { background: '#ef4444', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 'bold' }
 };

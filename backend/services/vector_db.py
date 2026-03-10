@@ -232,6 +232,58 @@ class VectorDBService:
 
         return chunks
 
+    def get_all_sources(self) -> List[dict]:
+        """
+        Returns a list of unique sources currently embedded in ChromaDB,
+        along with their document type and chunk counts.
+        """
+        if self.collection.count() == 0:
+            return []
+            
+        # Get all metadatas
+        results = self.collection.get(include=["metadatas"])
+        if not results or not results["metadatas"]:
+            return []
+            
+        sources_dict = {}
+        for meta in results["metadatas"]:
+            if not meta:
+                continue
+            source = meta.get("source", "Unknown")
+            doc_type = meta.get("doc_type", "Unknown")
+            dept = meta.get("department", "Unknown")
+            
+            if source not in sources_dict:
+                sources_dict[source] = {
+                    "source": source,
+                    "doc_type": doc_type,
+                    "department": dept,
+                    "chunk_count": 0,
+                    "added_at": meta.get("added_at")
+                }
+            sources_dict[source]["chunk_count"] += 1
+            
+        return list(sources_dict.values())
+        
+    def delete_by_source(self, source: str) -> int:
+        """
+        Deletes all chunks associated with a specific source.
+        Returns the number of chunks deleted.
+        """
+        if self.collection.count() == 0:
+            return 0
+            
+        # First, query to get the IDs of the chunks to delete
+        results = self.collection.get(where={"source": source})
+        ids_to_delete = results.get("ids", [])
+        
+        if not ids_to_delete:
+            return 0
+            
+        self.collection.delete(ids=ids_to_delete)
+        logger.info(f"Deleted source '{source}' | removed {len(ids_to_delete)} chunks")
+        return len(ids_to_delete)
+
     # ───────────────── STATS ─────────────────
 
     def get_stats(self) -> dict:

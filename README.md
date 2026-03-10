@@ -45,7 +45,9 @@ student-support/
 │   │   └── components/
 │   │       ├── ChatInterface.js    # Main student chat UI
 │   │       ├── MessageBubble.js    # Message rendering
-│   │       └── KnowledgePanel.js   # PDF/FAQ management
+│   │       ├── KnowledgePanel.js   # PDF/FAQ management
+│   │       ├── UserManagementPanel.js # Admin User Creation 
+│   │       └── AdminChatReviewPanel.js # Admin Chat Review Panel
 │   └── package.json
 │
 └── README.md
@@ -109,7 +111,10 @@ npm start
 - **WebSocket Live Agent Chat**: Real-time bi-directional messaging with connection lifecycle management.
 - **Queue Management**: Department-wise ticket queues and agent allocation.
 - **Self-Improving Knowledge Base**: Convert resolved human chats into vector embeddings to answer the next student instantly.
-- **Admin Dashboard**: Manage PDFs, FAQs, system stats, and monitor active queues.
+- **Admin Dashboard**: 
+  - **User Management**: Add, view, and delete Student and Agent accounts, complete with required University IDs.
+  - **Knowledge Base Management**: Upload PDFs, add FAQs, view uploaded sources, and delete specific knowledge items from ChromaDB.
+  - **Chat Review**: Review full transcripts of resolved Student-Agent conversations and choose to keep or permanently delete them.
 
 ---
 

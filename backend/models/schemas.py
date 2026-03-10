@@ -2,7 +2,30 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from models.user import UserRole
 
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class UserCreate(BaseModel):
+    university_id: str
+    email: str
+    password: str
+    full_name: Optional[str] = None
+    role: UserRole = UserRole.STUDENT
+
+class UserResponse(BaseModel):
+    id: int
+    university_id: str
+    email: str
+    full_name: Optional[str] = None
+    role: UserRole
+    is_active: bool
+
+    class Config:
+        from_attributes = True
 
 # ── Enums ────────────────────────────────────────────────────────────────────
 
@@ -10,7 +33,6 @@ class DocumentType(str, Enum):
     PDF = "pdf"
     FAQ = "faq"
     RESOLVED_CHAT = "resolved_chat"
-
 
 class MessageRole(str, Enum):
     USER = "user"
