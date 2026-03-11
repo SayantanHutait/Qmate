@@ -15,11 +15,11 @@ api.interceptors.request.use((config) => {
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (identifier, password) => {
   const form = new URLSearchParams();
-  form.append('username', email); // OAuth2 expects 'username'
+  form.append('username', identifier); // OAuth2 expects 'username'
   form.append('password', password);
-  
+
   const { data } = await api.post("/api/auth/login", form, {
     headers: { "Content-Type": "application/x-www-form-urlencoded" }
   });

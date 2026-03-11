@@ -25,6 +25,7 @@ def seed_users():
             print(f"Creating admin user: {admin_email} (password: admin123)")
             admin = User(
                 email=admin_email,
+                university_id="ADMIN001",
                 hashed_password=get_password_hash("admin123"),
                 full_name="System Admin",
                 role=UserRole.ADMIN
@@ -35,6 +36,7 @@ def seed_users():
             print(f"Creating agent user: {agent_email} (password: agent123)")
             agent = User(
                 email=agent_email,
+                university_id="AGENT001",
                 hashed_password=get_password_hash("agent123"),
                 full_name="Support Agent",
                 role=UserRole.AGENT
@@ -45,6 +47,7 @@ def seed_users():
             print(f"Creating student user: {student_email} (password: student123)")
             student = User(
                 email=student_email,
+                university_id="STU001",
                 hashed_password=get_password_hash("student123"),
                 full_name="John Doe",
                 role=UserRole.STUDENT

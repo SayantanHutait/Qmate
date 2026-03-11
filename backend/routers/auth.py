@@ -33,11 +33,31 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
+    username_or_uid = form_data.username
+    
+    if "@" in username_or_uid:
+        # Email login implies Admin
+        user = db.query(User).filter(User.email == username_or_uid).first()
+        if user and user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Agents and Students must login with UID",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    else:
+        # UID login implies Agent or Student
+        user = db.query(User).filter(User.university_id == username_or_uid).first()
+        if user and user.role == UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Admins must login with email",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

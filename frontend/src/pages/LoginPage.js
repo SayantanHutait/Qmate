@@ -4,7 +4,7 @@ import { loginUser } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -16,16 +16,16 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const data = await loginUser(email, password);
+      const data = await loginUser(identifier, password);
       login(data.access_token);
-      
+
       // Parse role to redirect (auth context updates on next tick, so we do it manually here)
       const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
-      
+
       if (tokenPayload.role === 'admin') navigate('/admin/dashboard');
       else if (tokenPayload.role === 'agent') navigate('/agent/dashboard');
       else navigate('/chat');
-      
+
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid login credentials');
     } finally {
@@ -39,18 +39,18 @@ export default function LoginPage() {
         <div style={styles.header}>🎓 Student Support Login</div>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleLogin} style={styles.form}>
-          <input 
-            type="email" 
-            placeholder="Email" 
-            value={email} 
-            onChange={e => setEmail(e.target.value)}
+          <input
+            type="text"
+            placeholder="Email (Admin) or UID"
+            value={identifier}
+            onChange={e => setIdentifier(e.target.value)}
             style={styles.input}
             required
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password} 
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
             onChange={e => setPassword(e.target.value)}
             style={styles.input}
             required
@@ -60,7 +60,9 @@ export default function LoginPage() {
           </button>
         </form>
         <div style={styles.footer}>
-          Seed Accounts: admin@college.edu, agent@college.edu, student@college.edu (password: *123)
+          Seed Accounts:<br />
+          Admin: admin@college.edu | Agent UID: AGENT001 | Student UID: STU001<br />
+          (password: *123)
         </div>
       </div>
     </div>
