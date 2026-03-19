@@ -31,19 +31,6 @@ export default function ChatInterface() {
         </div>
 
         <div style={styles.sideSection}>
-          <label style={styles.label}>Department</label>
-          <select
-            style={styles.select}
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-          >
-            {departments.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </div>
-
-        <div style={styles.sideSection}>
           <div style={styles.statusRow}>
             <span style={styles.statusDot} />
             <span style={styles.statusText}>AI Active</span>
@@ -83,7 +70,7 @@ export default function ChatInterface() {
             <div style={styles.header}>
               <div>
                 <div style={styles.headerTitle}>Student Support Chat</div>
-                <div style={styles.headerSub}>{department} Department • AI-powered with human backup</div>
+                <div style={styles.headerSub}>AI-powered with human backup</div>
               </div>
             </div>
 
@@ -105,7 +92,7 @@ export default function ChatInterface() {
 
               {canEscalate && !isEscalated && !isAgentJoined && (
                 <EscalationBanner
-                  department={department}
+                  departments={departments}
                   onEscalate={escalate}
                 />
               )}

@@ -73,16 +73,17 @@ export function useChat() {
     }
   }, [isEscalated, sessionId]);
 
-  const escalate = useCallback(async () => {
+  const escalate = useCallback(async (selectedDepartment) => {
     try {
-      await escalateChat({ session_id: sessionId, department });
+      await escalateChat({ session_id: sessionId, department: selectedDepartment });
+      setDepartment(selectedDepartment);
       setIsEscalated(true);
       setCanEscalate(false);
     } catch (err) {
       console.error(err);
       setError("Failed to escalate. Please try again later.");
     }
-  }, [sessionId, department]);
+  }, [sessionId]);
 
   const send = useCallback(
     async (text) => {
