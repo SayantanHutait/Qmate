@@ -7,11 +7,16 @@ Main entry point. Registers all routers, middleware, and startup events.
 import logging
 from contextlib import asynccontextmanager
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from config import settings
 from routers import auth, chat, knowledge
+
+os.makedirs("uploads/pdfs", exist_ok=True)
+os.makedirs("uploads/student_docs", exist_ok=True)
 from models.database import engine, Base
 from models import user, chat as chat_models
 
@@ -60,6 +65,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.mount("/files", StaticFiles(directory="uploads/pdfs"), name="files")
+app.mount("/student-files", StaticFiles(directory="uploads/student_docs"), name="student_files")
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(

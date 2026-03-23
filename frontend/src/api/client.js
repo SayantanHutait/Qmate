@@ -55,6 +55,18 @@ export const uploadPDF = async (file, department) => {
   return data;
 };
 
+export const uploadForm = async (file, title, description, department) => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("title", title);
+  form.append("description", description);
+  if (department) form.append("department", department);
+  const { data } = await api.post("/api/knowledge/upload-form", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
 export const addFAQ = async ({ question, answer, department, tags }) => {
   const { data } = await api.post("/api/knowledge/faq", {
     question,
@@ -142,6 +154,17 @@ export const createUser = async (userData) => {
 
 export const deleteUser = async (userId) => {
   const { data } = await api.delete(`/api/users/${userId}`);
+  return data;
+};
+
+export const bulkUploadStudentDocuments = async (files) => {
+  const form = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    form.append("files", files[i]);
+  }
+  const { data } = await api.post("/api/users/upload-documents-bulk", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };
 

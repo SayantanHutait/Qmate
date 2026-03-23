@@ -143,6 +143,29 @@ class VectorDBService:
 
         return 1
 
+    # ───────────────── ADD FORM ─────────────────
+
+    def add_form(self, title: str, description: str, filename: str, download_url: str, department: Optional[str] = None) -> int:
+        text = f"Form/File Name: {title}\nDescription: {description}\nDownload Link: [{title}]({download_url})\n(Provide this link to the user if they ask for this form or file.)"
+        embedding = self._embed([text])[0]
+        doc_id = str(uuid.uuid4())
+
+        self.collection.add(
+            ids=[doc_id],
+            embeddings=[embedding],
+            documents=[text],
+            metadatas=[
+                {
+                    "source": f"Form | {filename}",
+                    "doc_type": DocumentType.FORM.value,
+                    "department": department or "General",
+                    "added_at": datetime.utcnow().isoformat(),
+                }
+            ],
+        )
+        logger.info(f"Form added | filename={filename}")
+        return 1
+
     # ───────────────── ADD RESOLVED CHAT ─────────────────
 
     def add_resolved_chat(
@@ -312,6 +335,7 @@ class VectorDBService:
             "pdf_chunks": _count(DocumentType.PDF),
             "faq_chunks": _count(DocumentType.FAQ),
             "resolved_chat_chunks": _count(DocumentType.RESOLVED_CHAT),
+            "form_chunks": _count(DocumentType.FORM),
         }
 
 

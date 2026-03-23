@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/knowledge", tags=["Knowledge Base"])
 
 
+import os
+
 @router.post("/upload-pdf", response_model=DocumentUploadResponse)
 async def upload_pdf(
     file: UploadFile = File(...),
@@ -50,7 +52,11 @@ async def upload_pdf(
                 detail="PDF appears to be empty or contains no extractable text (it may be a scanned image PDF)."
             )
 
-        chunks_added = vector_db.add_pdf_text(clean, filename=file.filename, department=department)
+        chunks_added = vector_db.add_pdf_text(
+            clean, 
+            filename=file.filename, 
+            department=department
+        )
 
         logger.info(f"PDF uploaded | file='{file.filename}' | chunks={chunks_added}")
         return DocumentUploadResponse(
@@ -66,6 +72,51 @@ async def upload_pdf(
         logger.error(f"PDF upload failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.post("/upload-form", response_model=DocumentUploadResponse)
+async def upload_form(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    description: str = Form(""),
+    department: Optional[str] = Form(None),
+):
+    """
+    Upload a downloadable form (e.g., library membership form).
+    Saves the file to disk and adds a specific chunk instructing the AI to provide its download link.
+    """
+    if file.size and file.size > 20 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 20 MB.")
+
+    try:
+        file_bytes = await file.read()
+        
+        file_path = os.path.join("uploads", "pdfs", file.filename)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+            
+        download_url = f"http://localhost:8000/files/{file.filename}"
+
+        vector_db.add_form(
+            title=title,
+            description=description,
+            filename=file.filename,
+            download_url=download_url,
+            department=department
+        )
+
+        logger.info(f"Form uploaded and saved | file='{file.filename}'")
+        return DocumentUploadResponse(
+            filename=file.filename,
+            doc_type=DocumentType.FORM,
+            chunks_added=1,
+            message=f"Successfully uploaded form '{title}' and created download link.",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Form upload failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/faq")
 async def add_faq(faq: FAQCreateRequest):

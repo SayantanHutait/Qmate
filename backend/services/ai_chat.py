@@ -78,10 +78,10 @@ Assistant:
 """
         return prompt
 
-    async def chat(self, request: ChatRequest) -> ChatResponse:
+    async def chat(self, request: ChatRequest, university_id: str) -> ChatResponse:
 
         logger.info(
-            f"Chat | session={request.session_id} | "
+            f"Chat | session={request.session_id} | uid={university_id} | "
             f"dept={request.department} | msg='{request.message[:80]}...'"
         )
 
@@ -95,21 +95,22 @@ Assistant:
         # 2. Filter relevant chunks
         relevant_chunks = [c for c in chunks if c.relevance_score >= RELEVANCE_THRESHOLD]
 
-        if not relevant_chunks:
-            return ChatResponse(
-                session_id=request.session_id,
-                answer=(
-                    "I don't have verified information about this topic in my knowledge base yet. "
-                    "Would you like me to connect you with a human support agent?"
-                ),
-                sources=[],
-                query_source=QuerySource.NOT_FOUND,
-                can_escalate=True,
-                confidence=0.0,
-            )
-
         # 3. Build context
         context = self._build_context(relevant_chunks)
+        
+        # 3.5 Inject Personalized Documents directly into context
+        from models.database import SessionLocal
+        from models.user import StudentDocument
+        try:
+            db = SessionLocal()
+            user_docs = db.query(StudentDocument).filter_by(university_id=university_id.upper()).all()
+            db.close()
+            if user_docs:
+                context += "\n\n*** URGENT SYSTEM OVERRIDE: PERSONALIZED DOCUMENTS AVAILABLE ***\n"
+                for d in user_docs:
+                    context += f"The user requesting chat has an official '{d.doc_type}' document ready. If they ask for their {d.doc_type}, give them exactly this link to download it immediately: [Download {d.doc_type.title()}](http://localhost:8000/student-files/{d.filename})\n"
+        except Exception as e:
+            logger.error(f"Failed to inject student docs: {e}")
 
         # 4. Build Gemini prompt
         prompt = self._build_prompt(

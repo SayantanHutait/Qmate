@@ -7,6 +7,18 @@ class UserRole(str, enum.Enum):
     AGENT = "agent"
     ADMIN = "admin"
 
+from datetime import datetime
+from sqlalchemy import DateTime
+
+class StudentDocument(Base):
+    __tablename__ = "student_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    university_id = Column(String, index=True, nullable=False)
+    doc_type = Column(String, nullable=False)
+    filename = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class User(Base):
     __tablename__ = "users"
 

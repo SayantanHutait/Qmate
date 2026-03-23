@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, deleteUser } from '../api/client';
+import { getUsers, createUser, deleteUser, bulkUploadStudentDocuments } from '../api/client';
 
 export default function UserManagementPanel() {
   const [users, setUsers] = useState([]);
@@ -14,6 +14,11 @@ export default function UserManagementPanel() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+
+  // Bulk Upload state
+  const [bulkFiles, setBulkFiles] = useState([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -73,6 +78,21 @@ export default function UserManagementPanel() {
     } catch (err) {
       console.error("Failed to delete user", err);
       alert(err.response?.data?.detail || 'Failed to delete user.');
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (bulkFiles.length === 0) return;
+    setBulkLoading(true);
+    setBulkMsg('');
+    try {
+      const res = await bulkUploadStudentDocuments(bulkFiles);
+      setBulkMsg(`✅ Uploaded ${res.success} files. Failed: ${res.failed}.`);
+      setBulkFiles([]);
+    } catch (e) {
+      setBulkMsg(`❌ Upload Error: ${e.response?.data?.detail || e.message}`);
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -138,7 +158,7 @@ export default function UserManagementPanel() {
           )}
         </div>
 
-        {/* Right Side: Add User Form */}
+        {/* Right Side: Forms & Actions */}
         <div style={styles.formSection}>
           <h4>Create New User</h4>
           <form onSubmit={handleCreateUser} style={styles.form}>
@@ -213,6 +233,30 @@ export default function UserManagementPanel() {
               {formLoading ? 'Creating...' : 'Create User'}
             </button>
           </form>
+
+          <hr style={{ borderColor: '#334155', margin: '30px 0' }} />
+
+          <h4>Bulk Upload Documents</h4>
+          <p style={{fontSize: '0.8rem', color: '#94a3b8', marginBottom: 10}}>
+            Upload personalized files for students (e.g. <code>STU123_bonafide.pdf</code>). AI will fetch them automatically.
+          </p>
+          <div style={styles.formGroup}>
+            <input 
+              type="file" 
+              multiple 
+              accept=".pdf"
+              onChange={(e) => setBulkFiles(Array.from(e.target.files))}
+              style={styles.input}
+            />
+          </div>
+          <button 
+            disabled={bulkLoading || bulkFiles.length === 0} 
+            onClick={handleBulkUpload}
+            style={{...styles.submitBtn, backgroundColor: '#8b5cf6', marginTop: 15}}
+          >
+            {bulkLoading ? 'Uploading...' : `Upload ${bulkFiles.length} File(s)`}
+          </button>
+          {bulkMsg && <div style={{marginTop: 10, fontSize: '0.9rem'}}>{bulkMsg}</div>}
         </div>
       </div>
     </div>

@@ -33,6 +33,7 @@ class DocumentType(str, Enum):
     PDF = "pdf"
     FAQ = "faq"
     RESOLVED_CHAT = "resolved_chat"
+    FORM = "form"
 
 class MessageRole(str, Enum):
     USER = "user"
@@ -120,4 +121,5 @@ class KnowledgeBaseStats(BaseModel):
     pdf_chunks: int
     faq_chunks: int
     resolved_chat_chunks: int
+    form_chunks: int
     collections: List[str]

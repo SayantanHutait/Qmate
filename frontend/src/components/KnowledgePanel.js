@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { uploadPDF, addFAQ, getKnowledgeStats, addResolvedChat, getKnowledgeSources, deleteKnowledgeSource } from "../api/client";
+import { uploadPDF, uploadForm, addFAQ, getKnowledgeStats, addResolvedChat, getKnowledgeSources, deleteKnowledgeSource } from "../api/client";
 
-const TABS = ["📄 Upload PDF", "✅ Add FAQ", "💬 Add Resolved Chat", "📊 Stats", "🗑️ Manage Content"];
+const TABS = ["📄 Upload PDF", "📎 Upload Form", "✅ Add FAQ", "💬 Add Resolved Chat", "📊 Stats", "🗑️ Manage Content"];
 const DEPARTMENTS = ["General", "Admissions", "Finance", "Academics", "IT Support", "Library"];
 
 export default function KnowledgePanel({ onClose }) {
@@ -28,7 +28,6 @@ export default function KnowledgePanel({ onClose }) {
           <div style={styles.title}>📚 Knowledge Base Manager</div>
           <div style={styles.sub}>Add documents, FAQs, and resolved chats to improve the AI</div>
         </div>
-        <button style={styles.closeBtn} onClick={onClose}>✕ Back to Chat</button>
       </div>
 
       {/* Tabs */}
@@ -53,21 +52,26 @@ export default function KnowledgePanel({ onClose }) {
           <PDFUploadTab loading={loading} setLoading={setLoading} showStatus={showStatus} onSuccess={fetchStats} />
         )}
 
-        {/* Tab 1: Add FAQ */}
+        {/* Tab 1: Upload Form */}
         {tab === 1 && (
+          <FormUploadTab loading={loading} setLoading={setLoading} showStatus={showStatus} onSuccess={fetchStats} />
+        )}
+
+        {/* Tab 2: Add FAQ */}
+        {tab === 2 && (
           <FAQTab loading={loading} setLoading={setLoading} showStatus={showStatus} onSuccess={fetchStats} />
         )}
 
-        {/* Tab 2: Resolved Chat */}
-        {tab === 2 && (
+        {/* Tab 3: Resolved Chat */}
+        {tab === 3 && (
           <ResolvedChatTab loading={loading} setLoading={setLoading} showStatus={showStatus} onSuccess={fetchStats} />
         )}
 
-        {/* Tab 3: Stats */}
-        {tab === 3 && <StatsTab stats={stats} onRefresh={fetchStats} />}
+        {/* Tab 4: Stats */}
+        {tab === 4 && <StatsTab stats={stats} onRefresh={fetchStats} />}
 
-        {/* Tab 4: Manage Content */}
-        {tab === 4 && (
+        {/* Tab 5: Manage Content */}
+        {tab === 5 && (
           <ManageContentTab showStatus={showStatus} onSuccess={fetchStats} />
         )}
       </div>
@@ -77,13 +81,12 @@ export default function KnowledgePanel({ onClose }) {
 
 function PDFUploadTab({ loading, setLoading, showStatus, onSuccess }) {
   const [file, setFile] = useState(null);
-  const [dept, setDept] = useState("General");
 
   const submit = async () => {
     if (!file) return;
     setLoading(true);
     try {
-      const result = await uploadPDF(file, dept);
+      const result = await uploadPDF(file, "General");
       showStatus("success", result.message);
       setFile(null);
       onSuccess();
@@ -95,10 +98,6 @@ function PDFUploadTab({ loading, setLoading, showStatus, onSuccess }) {
   return (
     <div style={styles.form}>
       <p style={styles.desc}>Upload academic PDFs (handbooks, policies, calendars). Text will be extracted and chunked into the knowledge base immediately.</p>
-      <label style={styles.label}>Department</label>
-      <select style={styles.select} value={dept} onChange={e => setDept(e.target.value)}>
-        {["General","Admissions","Finance","Academics","IT Support","Library"].map(d => <option key={d}>{d}</option>)}
-      </select>
       <label style={styles.label}>PDF File</label>
       <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0])} style={styles.fileInput} />
       {file && <div style={styles.fileInfo}>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</div>}
@@ -109,16 +108,54 @@ function PDFUploadTab({ loading, setLoading, showStatus, onSuccess }) {
   );
 }
 
+function FormUploadTab({ loading, setLoading, showStatus, onSuccess }) {
+  const [file, setFile] = useState(null);
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+
+  const submit = async () => {
+    if (!file || !title.trim()) return;
+    setLoading(true);
+    try {
+      const result = await uploadForm(file, title, desc, "General");
+      showStatus("success", result.message);
+      setFile(null); setTitle(""); setDesc("");
+      onSuccess();
+    } catch (e) {
+      showStatus("error", e?.response?.data?.detail || "Upload failed.");
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div style={styles.form}>
+      <p style={styles.desc}>Upload a specific form or document to hand out to students (e.g. Admission Form, Fee Waiver). The AI will provide the exact download link whenever requested.</p>
+      
+      <label style={styles.label}>Form Title</label>
+      <input style={styles.input} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Library Membership Form" />
+      
+      <label style={styles.label}>Description (Optional)</label>
+      <input style={styles.input} value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. For students applying to borrow books..." />
+      
+      <label style={styles.label}>PDF File</label>
+      <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0])} style={styles.fileInput} />
+      {file && <div style={styles.fileInfo}>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</div>}
+      
+      <button style={{ ...styles.btn, opacity: (!file || !title.trim() || loading) ? 0.5 : 1 }} disabled={!file || !title.trim() || loading} onClick={submit}>
+        {loading ? "Uploading..." : "Upload & Create Download Link"}
+      </button>
+    </div>
+  );
+}
+
 function FAQTab({ loading, setLoading, showStatus, onSuccess }) {
   const [q, setQ] = useState("");
   const [a, setA] = useState("");
-  const [dept, setDept] = useState("General");
 
   const submit = async () => {
     if (!q.trim() || !a.trim()) return;
     setLoading(true);
     try {
-      const result = await addFAQ({ question: q, answer: a, department: dept });
+      const result = await addFAQ({ question: q, answer: a, department: "General" });
       showStatus("success", result.message);
       setQ(""); setA("");
       onSuccess();
@@ -130,10 +167,6 @@ function FAQTab({ loading, setLoading, showStatus, onSuccess }) {
   return (
     <div style={styles.form}>
       <p style={styles.desc}>Add a verified Q&A pair. The AI will use this information immediately — no retraining needed. Only add approved, accurate information.</p>
-      <label style={styles.label}>Department</label>
-      <select style={styles.select} value={dept} onChange={e => setDept(e.target.value)}>
-        {["General","Admissions","Finance","Academics","IT Support","Library"].map(d => <option key={d}>{d}</option>)}
-      </select>
       <label style={styles.label}>Question</label>
       <input style={styles.input} value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. What is the deadline for fee payment this semester?" />
       <label style={styles.label}>Answer</label>
@@ -148,13 +181,12 @@ function FAQTab({ loading, setLoading, showStatus, onSuccess }) {
 function ResolvedChatTab({ loading, setLoading, showStatus, onSuccess }) {
   const [query, setQuery] = useState("");
   const [resolution, setResolution] = useState("");
-  const [dept, setDept] = useState("General");
 
   const submit = async () => {
     if (!query.trim() || !resolution.trim()) return;
     setLoading(true);
     try {
-      const result = await addResolvedChat({ student_query: query, agent_resolution: resolution, department: dept });
+      const result = await addResolvedChat({ student_query: query, agent_resolution: resolution, department: "General" });
       showStatus("success", result.message);
       setQuery(""); setResolution("");
       onSuccess();
@@ -166,10 +198,6 @@ function ResolvedChatTab({ loading, setLoading, showStatus, onSuccess }) {
   return (
     <div style={styles.form}>
       <p style={styles.desc}>Convert a resolved human agent conversation into AI knowledge. This is the self-improvement loop — human expertise directly trains the AI.</p>
-      <label style={styles.label}>Department</label>
-      <select style={styles.select} value={dept} onChange={e => setDept(e.target.value)}>
-        {["General","Admissions","Finance","Academics","IT Support","Library"].map(d => <option key={d}>{d}</option>)}
-      </select>
       <label style={styles.label}>Student's Original Query</label>
       <textarea style={{ ...styles.input, minHeight: 80, resize: "vertical" }} value={query} onChange={e => setQuery(e.target.value)} placeholder="What did the student ask?" />
       <label style={styles.label}>Agent's Resolution</label>
@@ -186,8 +214,9 @@ function StatsTab({ stats, onRefresh }) {
   const items = [
     { label: "Total Knowledge Chunks", value: stats.total_chunks, color: "#60a5fa", icon: "🧠" },
     { label: "PDF Chunks", value: stats.pdf_chunks, color: "#f97316", icon: "📄" },
+    { label: "Form Chunks", value: stats.form_chunks || 0, color: "#fcd34d", icon: "📎" },
     { label: "FAQ Chunks", value: stats.faq_chunks, color: "#22c55e", icon: "✅" },
-    { label: "Resolved Chat Chunks", value: stats.resolved_chat_chunks, color: "#a855f7", icon: "💬" },
+    { label: "Chat Chunks", value: stats.resolved_chat_chunks, color: "#a855f7", icon: "💬" },
   ];
   return (
     <div>
@@ -256,7 +285,6 @@ function ManageContentTab({ showStatus, onSuccess }) {
             <tr>
               <th style={styles.th}>Source / Title</th>
               <th style={styles.th}>Type</th>
-              <th style={styles.th}>Dept.</th>
               <th style={styles.th}>Chunks</th>
               <th style={styles.th}>Actions</th>
             </tr>
@@ -274,9 +302,8 @@ function ManageContentTab({ showStatus, onSuccess }) {
                     <span style={{fontSize: 10, color: '#64748b'}}>{formatDate(s.added_at)}</span>
                   </td>
                   <td style={styles.td}>
-                    {s.doc_type === 'pdf' ? '📄 PDF' : s.doc_type === 'faq' ? '✅ FAQ' : '💬 Chat'}
+                    {s.doc_type === 'pdf' ? '📄 PDF' : s.doc_type === 'form' ? '📎 Form' : s.doc_type === 'faq' ? '✅ FAQ' : '💬 Chat'}
                   </td>
-                  <td style={styles.td}>{s.department}</td>
                   <td style={styles.td}>{s.chunk_count}</td>
                   <td style={styles.td}>
                     <button onClick={() => handleDelete(s.source)} style={styles.deleteBtn}>
