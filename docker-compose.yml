@@ -1,0 +1,65 @@
+services:
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: student-support-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=gemini-2.5-flash-lite
+      - GEMINI_EMBEDDING_MODEL=gemini-embedding-001
+      - CHROMA_PERSIST_DIR=/app/chroma_db
+      - CHROMA_COLLECTION_NAME=institute_knowledge
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-dev-secret-key-change-in-production}
+      - APP_ENV=development
+      - CORS_ORIGINS=http://localhost:3000
+      - AGENT_START_HOUR=9
+      - AGENT_END_HOUR=17
+    volumes:
+      - ./backend:/app
+      - backend-chroma-data:/app/chroma_db
+      - backend-uploads:/app/uploads
+    networks:
+      - student-support-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: student-support-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - student-support-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+networks:
+  student-support-network:
+    driver: bridge
+
+volumes:
+  backend-chroma-data:
+    driver: local
+  backend-uploads:
+    driver: local
