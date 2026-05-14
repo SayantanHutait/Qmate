@@ -57,17 +57,62 @@ student-support/
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 🐳 Option 1: Docker (Recommended - Easiest)
+
+**Prerequisites:**
+- Docker Desktop installed ([Download here](https://www.docker.com/products/docker-desktop/))
+- Google Gemini API key ([Get one here](https://aistudio.google.com/app/apikey))
+
+**Steps:**
+
+1. **Clone and navigate to the project:**
+```bash
+git clone <your-repo-url>
+cd student-support
+```
+
+2. **Configure environment:**
+```bash
+# Edit .env file and add your Gemini API key
+# Windows: notepad .env
+# Mac/Linux: nano .env
+```
+
+3. **Start the application:**
+```bash
+# Windows
+start.bat
+
+# Mac/Linux
+chmod +x start.sh
+./start.sh
+
+# Or manually
+docker-compose up --build
+```
+
+4. **Access the application:**
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+📖 **Full Docker guide:** See [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed instructions, troubleshooting, and production deployment.
+
+---
+
+### 💻 Option 2: Manual Setup (Traditional)
+
+**Prerequisites:**
 - Python 3.10+
 - Node.js 18+
 - A Google Gemini API key
 
-### 1. Set up the backend
+**1. Set up the backend:**
 
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env — set GOOGLE_API_KEY=your-key-here and configure SQLite/JWT secrets
+# Edit .env — set GEMINI_API_KEY=your-key-here
 ```
 
 **Installation:**
@@ -79,7 +124,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### 2. Start the frontend (in a new terminal)
+**2. Start the frontend (in a new terminal):**
 
 ```bash
 cd frontend
@@ -87,7 +132,7 @@ npm install
 npm start
 ```
 
-### 3. Open the app
+**3. Open the app:**
 
 - **Web UI**: http://localhost:3000
 - **API Docs**: http://localhost:8000/docs
