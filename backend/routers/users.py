@@ -86,10 +86,8 @@ async def upload_documents_bulk(
             parts = file.filename.split("_")
             if len(parts) < 2:
                 parts = file.filename.split("-")
-                if len(parts) < 2:
-                    parts = file.filename.split(".")
             
-            if len(parts) < 1:
+            if len(parts) < 2:
                 results["failed"] += 1
                 results["errors"].append(f"{file.filename}: Invalid format. Need ID prefix like STU123_...")
                 continue
@@ -99,13 +97,13 @@ async def upload_documents_bulk(
             # Infer doc type from filename flexibly using prefixes
             raw_type = parts[1].split('.')[0].lower()
             if raw_type.startswith("bonafide"):
-                doc_type = "bonafide"
+                doc_type = "bonafide certificate"
             elif raw_type.startswith("transcript"):
                 doc_type = "transcript"
             elif raw_type.startswith("fee"):
-                doc_type = "fee"
+                doc_type = "fee receipt"
             elif raw_type.startswith("id"):
-                doc_type = "id"
+                doc_type = "id card"
             else:
                 doc_type = "document" # Fallback generic name
 

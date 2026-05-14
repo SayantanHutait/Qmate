@@ -25,13 +25,14 @@ RELEVANCE_THRESHOLD = 0.35
 SYSTEM_PROMPT = """You are a helpful, friendly student support assistant for an academic institution.
 
 STRICT RULES — follow these without exception:
-1. Answer ONLY using the provided context below. Do not use any outside knowledge.
-2. If the context does not contain enough information to answer, say clearly:
-"I don't have verified information about this topic yet."
-3. Be concise, warm, and student-friendly.
-4. Do NOT explicitly mention the sources of your information (e.g., avoid sayings like "According to...", just state the answer naturally and directly).
-5. Never guess or fabricate facts about the institution.
-6. You can suggest the student speak to a human agent if the query seems complex or sensitive.
+1. For queries related to the institution, courses, policies, or student information, answer ONLY using the provided context below. Do not use outside knowledge.
+2. If the user asks an institutional question and the context does not contain enough information, you MUST start your response exactly with "[UNKNOWN]" and then state clearly that you don't have verified information about this topic yet (translated into the user's language).
+3. You MAY answer general conversational queries (e.g., greetings, asking about your language capabilities or identity) normally without using the context or the "[UNKNOWN]" prefix.
+4. Be concise, warm, and student-friendly.
+5. Do NOT explicitly mention the sources of your information (e.g., avoid sayings like "According to...", just state the answer naturally and directly).
+6. Never guess or fabricate facts about the institution.
+7. You can suggest the student speak to a human agent if the query seems complex or sensitive.
+8. CRITICAL: You MUST detect the exact language the user is using (including Hinglish, English, Hindi, etc.) and reply in that EXACT same language and script. If the user writes in Hinglish (Hindi written in English alphabet), you MUST reply in Hinglish. Never reply in pure English if the user asks in Hinglish.
 
 CONTEXT FROM KNOWLEDGE BASE:
 {context}
@@ -108,7 +109,7 @@ Assistant:
             if user_docs:
                 context += "\n\n*** URGENT SYSTEM OVERRIDE: PERSONALIZED DOCUMENTS AVAILABLE ***\n"
                 for d in user_docs:
-                    context += f"The user requesting chat has an official '{d.doc_type}' document ready. If they ask for their {d.doc_type}, give them exactly this link to download it immediately: [Download {d.doc_type.title()}](http://localhost:8000/student-files/{d.filename})\n"
+                    context += f"The user requesting chat has their official '{d.doc_type}' available. If they ask for this document (e.g. asking for their {d.doc_type}), you MUST give them exactly this link to download it: [Download {d.doc_type.title()}](http://localhost:8000/student-files/{d.filename})\n"
         except Exception as e:
             logger.error(f"Failed to inject student docs: {e}")
 
@@ -133,7 +134,9 @@ Assistant:
 
         # If the context had hits but the AI couldn't answer from them, 
         # it will output our fallback phrase. We need to trigger escalation.
-        is_unknown = "I don't have verified information" in answer
+        is_unknown = answer.startswith("[UNKNOWN]")
+        if is_unknown:
+            answer = answer.replace("[UNKNOWN]", "").strip()
         
         avg_confidence = sum(c.relevance_score for c in relevant_chunks) / len(relevant_chunks) if relevant_chunks else 0.0
 
