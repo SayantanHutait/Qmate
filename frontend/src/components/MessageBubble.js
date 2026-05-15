@@ -54,9 +54,12 @@ export default function MessageBubble({ message }) {
         {/* Footer row */}
         {!isUser && (
           <div style={styles.footer}>
+{message.timestamp && (
             <span style={styles.time}>
-              {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
+            )}
+           
             {badge && (
               <span style={{ ...styles.badge, background: badge.bg, color: badge.color }}>
                 {badge.label}
@@ -77,9 +80,11 @@ export default function MessageBubble({ message }) {
 
         {isUser && (
           <div style={{ ...styles.footer, justifyContent: "flex-end" }}>
+            {message.timestamp && (
             <span style={styles.time}>
-              {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
+            )}
           </div>
         )}
       </div>
