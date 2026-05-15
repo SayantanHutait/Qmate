@@ -109,7 +109,7 @@ Assistant:
             if user_docs:
                 context += "\n\n*** URGENT SYSTEM OVERRIDE: PERSONALIZED DOCUMENTS AVAILABLE ***\n"
                 for d in user_docs:
-                    context += f"The user requesting chat has their official '{d.doc_type}' available. If they ask for this document (e.g. asking for their {d.doc_type}), you MUST give them exactly this link to download it: [Download {d.doc_type.title()}](http://localhost:8000/student-files/{d.filename})\n"
+                    context += f"The user requesting chat has their official '{d.doc_type}' available. If they ask for this document (e.g. asking for their {d.doc_type}), you MUST give them exactly this link to download it: [Download {d.doc_type.title()}](http://13.62.109.216:8000/student-files/{d.filename})\n"
         except Exception as e:
             logger.error(f"Failed to inject student docs: {e}")
 

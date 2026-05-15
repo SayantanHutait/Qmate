@@ -30,7 +30,7 @@ export function useChat() {
   // Initialize WebSocket when escalated
   useEffect(() => {
     if (isEscalated && !ws.current) {
-      ws.current = new WebSocket(`ws://localhost:8000/api/ws/student/${sessionId}`);
+      ws.current = new WebSocket(`ws://13.62.109.216:8000/api/ws/student/${sessionId}`);
       
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);

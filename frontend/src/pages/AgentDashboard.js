@@ -29,7 +29,7 @@ export default function AgentDashboard() {
   // Set up Agent WebSocket to listen to queue updates and route chat messages
   useEffect(() => {
     if (user?.id) {
-      ws.current = new WebSocket(`ws://localhost:8000/api/ws/agent/${user.id}`);
+      ws.current = new WebSocket(`ws://13.62.109.216:8000/api/ws/agent/${user.id}`);
       
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
